@@ -1,0 +1,318 @@
+/**
+ * Tests for server handler correctness after PR #106 review fixes.
+ *
+ * These tests verify:
+ * - Humanitarian summary handler rejects unmapped country codes
+ * - Humanitarian summary returns ISO-2 country_code (not ISO-3)
+ * - Hardcoded political context is removed from LLM prompts
+ * - Headline deduplication logic works correctly
+ * - Cache key builder produces deterministic output
+ * - Vessel snapshot handler has cache + in-flight dedup
+ */
+
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { deduplicateHeadlines } from '../server/worldmonitor/news/v1/dedup.mjs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, '..');
+
+// Helper to read a source file relative to project root
+const readSrc = (relPath) => readFileSync(resolve(root, relPath), 'utf-8');
+
+// ========================================================================
+// 1. Humanitarian summary: country fallback + ISO-2 contract
+// ========================================================================
+
+describe('getHumanitarianSummary handler', () => {
+  const src = readSrc('server/worldmonitor/conflict/v1/get-humanitarian-summary.ts');
+
+  it('returns undefined when country has no ISO3 mapping (BLOCKING-1)', () => {
+    // Must have early return when no ISO3 mapping (before HAPI fetch)
+    assert.match(src, /if\s*\(\s*!iso3\s*\)\s*return\s+undefined/,
+      'Should return undefined when no ISO3 mapping exists');
+    // The countryCode branch must NOT fall back to Object.values(byCountry)[0]
+    // Extract only the "if (countryCode)" block for picking entry and verify no fallback
+    const pickSection = src.slice(
+      src.indexOf('// Pick the right country entry'),
+      src.indexOf('if (!entry) return undefined;'),
+    );
+    // Inside the countryCode branch, should NOT have Object.values(byCountry)[0] as fallback
+    const countryCodeBranch = pickSection.slice(0, pickSection.indexOf('} else {'));
+    assert.doesNotMatch(countryCodeBranch, /Object\.values\(byCountry\)\[0\]/,
+      'countryCode branch should not fallback to first entry');
+  });
+
+  it('returns ISO-2 country_code per proto contract (BLOCKING-2)', () => {
+    // Must NOT return ISO2_TO_ISO3[...] as countryCode
+    assert.doesNotMatch(src, /countryCode:\s*ISO2_TO_ISO3/,
+      'Should not return ISO-3 code in countryCode field');
+    // Should return the original countryCode (uppercased)
+    assert.match(src, /countryCode:\s*countryCode.*\.toUpperCase\(\)/,
+      'Should return original ISO-2 countryCode uppercased');
+  });
+
+  it('uses renamed conflict-event proto fields (MEDIUM-1)', () => {
+    assert.match(src, /conflictEventsTotal/,
+      'Should use conflictEventsTotal field');
+    assert.match(src, /conflictPoliticalViolenceEvents/,
+      'Should use conflictPoliticalViolenceEvents field');
+    assert.match(src, /conflictFatalities/,
+      'Should use conflictFatalities field');
+    assert.match(src, /referencePeriod/,
+      'Should use referencePeriod field');
+    assert.match(src, /conflictDemonstrations/,
+      'Should use conflictDemonstrations field');
+    // Old field names must not appear
+    assert.doesNotMatch(src, /populationAffected/,
+      'Should not reference old populationAffected field');
+    assert.doesNotMatch(src, /peopleInNeed/,
+      'Should not reference old peopleInNeed field');
+  });
+});
+
+// ========================================================================
+// 2. Humanitarian summary proto: field semantics
+// ========================================================================
+
+describe('humanitarian_summary.proto', () => {
+  const proto = readSrc('proto/worldmonitor/conflict/v1/humanitarian_summary.proto');
+
+  it('has conflict-event field names instead of humanitarian field names', () => {
+    assert.match(proto, /conflict_events_total/);
+    assert.match(proto, /conflict_political_violence_events/);
+    assert.match(proto, /conflict_fatalities/);
+    assert.match(proto, /reference_period/);
+    assert.match(proto, /conflict_demonstrations/);
+    // Old names removed
+    assert.doesNotMatch(proto, /population_affected/);
+    assert.doesNotMatch(proto, /people_in_need/);
+    assert.doesNotMatch(proto, /internally_displaced/);
+    assert.doesNotMatch(proto, /food_insecurity_level/);
+    assert.doesNotMatch(proto, /water_access_pct/);
+  });
+
+  it('declares country_code as ISO-2', () => {
+    assert.match(proto, /ISO 3166-1 alpha-2/);
+  });
+});
+
+// ========================================================================
+// 3. Hardcoded political context removed (LOW-1)
+// ========================================================================
+
+describe('LLM prompt political context (LOW-1)', () => {
+  const src = readSrc('server/worldmonitor/news/v1/_shared.ts');
+
+  it('does not contain hardcoded "Donald Trump" reference', () => {
+    assert.doesNotMatch(src, /Donald Trump/,
+      'Should not contain hardcoded political figure name');
+  });
+
+  it('uses date-based dynamic context instead', () => {
+    assert.match(src, /Provide geopolitical context appropriate for the current date/,
+      'Should instruct LLM to use current-date context');
+  });
+});
+
+// ========================================================================
+// 4. Headline deduplication (ported logic test)
+// ========================================================================
+
+describe('headline deduplication', () => {
+  // Imports the real deduplicateHeadlines from dedup.mjs (shared with _shared.ts)
+
+  it('removes near-duplicate headlines', () => {
+    const headlines = [
+      'Russia launches missile strike on Ukrainian energy infrastructure targets',
+      'Russia launches missile strike on Ukrainian energy infrastructure overnight',
+      'EU approves new sanctions package against Russia',
+    ];
+    // Words >= 4 chars for headline 1: russia, launches, missile, strike, ukrainian, energy, infrastructure, targets (8)
+    // Words >= 4 chars for headline 2: russia, launches, missile, strike, ukrainian, energy, infrastructure, overnight (8)
+    // Intersection: 7/8 = 0.875 > 0.6 threshold
+    const result = deduplicateHeadlines(headlines);
+    assert.equal(result.length, 2, 'Should deduplicate near-identical headlines');
+    assert.equal(result[0], headlines[0], 'Should keep the first occurrence');
+    assert.equal(result[1], headlines[2], 'Should keep the dissimilar headline');
+  });
+
+  it('keeps all unique headlines', () => {
+    const headlines = [
+      'Tech stocks rally on AI optimism',
+      'Federal Reserve holds interest rates steady',
+      'New climate report warns of tipping points',
+    ];
+    const result = deduplicateHeadlines(headlines);
+    assert.equal(result.length, 3, 'All unique headlines should be kept');
+  });
+
+  it('handles empty input', () => {
+    assert.deepEqual(deduplicateHeadlines([]), []);
+  });
+
+  it('handles single headline', () => {
+    const result = deduplicateHeadlines(['Single headline here']);
+    assert.equal(result.length, 1);
+  });
+});
+
+// ========================================================================
+// 5. Cache key builder (determinism test)
+// ========================================================================
+
+describe('getCacheKey determinism', () => {
+  const src = readSrc('src/utils/summary-cache-key.ts');
+  const sharedSrc = readSrc('server/worldmonitor/news/v1/_shared.ts');
+
+  it('getCacheKey function exists and builds versioned keys', () => {
+    assert.match(src, /export function buildSummaryCacheKey\(/,
+      'buildSummaryCacheKey should be exported from shared module');
+    assert.match(sharedSrc, /getCacheKey/,
+      '_shared.ts should re-export getCacheKey');
+    assert.match(src, /CACHE_VERSION/,
+      'Should use CACHE_VERSION for cache key prefixing');
+    assert.match(src, /`summary:\$\{CACHE_VERSION\}:\$\{mode\}/,
+      'Cache key should include mode');
+  });
+
+  it('handles translate mode separately', () => {
+    assert.match(src, /if\s*\(mode\s*===\s*'translate'\)/,
+      'Should have separate key format for translate mode');
+  });
+});
+
+// ========================================================================
+// 6. Vessel snapshot caching (structural verification)
+// ========================================================================
+
+describe('getVesselSnapshot caching (HIGH-1)', () => {
+  const src = readSrc('server/worldmonitor/maritime/v1/get-vessel-snapshot.ts');
+
+  it('cache is keyed by request shape (candidates, tankers, quantized bbox)', () => {
+    // PR 3 (parity-push) replaced the prior `Record<'with'|'without'>` cache
+    // with a Map<string, SnapshotCacheSlot> where the key embeds all three
+    // axes that change response payload: includeCandidates, includeTankers,
+    // and (when present) a 1°-quantized bbox. This prevents distinct bboxes
+    // from collapsing onto a single cached response.
+    assert.match(src, /const\s+cache\s*=\s*new\s+Map<string,\s*SnapshotCacheSlot>/,
+      'cache should be a Map<string, SnapshotCacheSlot> keyed by request shape');
+    assert.match(src, /cacheKeyFor\s*\(/,
+      'cacheKeyFor() helper should compose the cache key');
+    // Key must distinguish includeCandidates, includeTankers, and bbox.
+    assert.match(src, /includeCandidates\s*\?\s*'1'\s*:\s*'0'/,
+      'cache key must encode includeCandidates');
+    assert.match(src, /includeTankers\s*\?\s*'1'\s*:\s*'0'/,
+      'cache key must encode includeTankers');
+  });
+
+  it('has split TTLs for base (5min) and live tanker / bbox (60s) reads', () => {
+    // Base path (density + military-detection consumers) keeps the prior
+    // 5-min cache. Live-tanker and bbox-filtered paths drop to 60s to honor
+    // the freshness contract that drives the Energy Atlas LiveTankersLayer.
+    assert.match(src, /SNAPSHOT_CACHE_TTL_BASE_MS\s*=\s*300[_]?000/,
+      'base TTL should remain 5 minutes (300000ms) for density/disruption consumers');
+    assert.match(src, /SNAPSHOT_CACHE_TTL_LIVE_MS\s*=\s*60[_]?000/,
+      'live tanker / bbox TTL should be 60s to match the gateway live tier s-maxage');
+  });
+
+  it('checks cache before calling relay', () => {
+    // fetchVesselSnapshot should check slot freshness before fetchVesselSnapshotFromRelay
+    const cacheCheckIdx = src.indexOf('slot.snapshot && (now - slot.timestamp)');
+    const relayCallIdx = src.indexOf('fetchVesselSnapshotFromRelay(');
+    assert.ok(cacheCheckIdx > -1, 'Should check slot freshness');
+    assert.ok(relayCallIdx > -1, 'Should have relay fetch function');
+    assert.ok(cacheCheckIdx < relayCallIdx,
+      'Cache check should come before relay call');
+  });
+
+  it('has in-flight dedup via per-slot promise', () => {
+    assert.match(src, /if\s*\(slot\.inFlight\)/,
+      'Should check for in-flight request on the selected slot');
+    assert.match(src, /slot\.inFlight\s*=\s*fetchVesselSnapshotFromRelay/,
+      'Should assign in-flight promise on the slot');
+    assert.match(src, /slot\.inFlight\s*=\s*null/,
+      'Should clear in-flight promise in finally block');
+  });
+
+  it('serves stale snapshot when relay fetch fails', () => {
+    assert.match(src, /return\s+result\s*\?\?\s*slot\.snapshot/,
+      'Should return stale cached snapshot from the selected slot when fresh relay fetch fails');
+  });
+
+  it('rejects oversized bbox AND out-of-range coords with statusCode=400', () => {
+    // PR 3 (parity-push): server-side guard against a malicious or buggy
+    // global-bbox query that would pull every tanker through one request.
+    // Range guard added in #3402 review-fix: relay silently drops malformed
+    // bboxes and serves global capped subsets — handler MUST validate
+    // -90..90 / -180..180 before calling relay. Error must carry
+    // statusCode=400 or error-mapper.ts maps it to a generic 500.
+    assert.match(src, /MAX_BBOX_DEGREES\s*=\s*10/,
+      'should declare a 10° max-bbox guard');
+    assert.match(src, /class\s+BboxValidationError/,
+      'should throw BboxValidationError on invalid bbox');
+    assert.match(src, /readonly\s+statusCode\s*=\s*400/,
+      'BboxValidationError must carry statusCode=400 (error-mapper surfaces it as HTTP 400 only when the error has a statusCode property)');
+    assert.match(src, /lat\s*>=\s*-90\s*&&\s*lat\s*<=\s*90/,
+      'must validate lat is in [-90, 90]');
+    assert.match(src, /lon\s*>=\s*-180\s*&&\s*lon\s*<=\s*180/,
+      'must validate lon is in [-180, 180]');
+  });
+
+  // NOTE: Full integration test (mocking fetch, verifying cache hits) requires
+  // a TypeScript-capable test runner. This structural test verifies the pattern.
+});
+
+// ========================================================================
+// getSimulationOutcome handler — structural tests
+// ========================================================================
+
+describe('getSimulationOutcome handler', () => {
+  const src = readSrc('server/worldmonitor/forecast/v1/get-simulation-outcome.ts');
+
+  it('returns found:false (NOT_FOUND) when pointer is absent', () => {
+    // The handler must define a NOT_FOUND sentinel with found: false
+    assert.match(src, /found:\s*false/,
+      'NOT_FOUND constant should set found: false');
+    // And return it when the pointer is missing
+    assert.match(src, /return\s+NOT_FOUND/,
+      'Should return NOT_FOUND when key is absent');
+  });
+
+  it('uses isOutcomePointer type guard before accessing pointer fields', () => {
+    assert.match(src, /isOutcomePointer\(raw\)/,
+      'Should use isOutcomePointer type guard on getRawJson result');
+    // Guard must check string and number fields — not just truthy
+    assert.match(src, /typeof\s+o\[.runId.\]\s*===\s*'string'/,
+      'Type guard should verify runId is a string');
+    assert.match(src, /typeof\s+o\[.theaterCount.\]\s*===\s*'number'/,
+      'Type guard should verify theaterCount is a number');
+  });
+
+  it('returns found:true with all pointer fields on success', () => {
+    assert.match(src, /found:\s*true/,
+      'Success path should return found: true');
+    // Must propagate all pointer fields
+    assert.match(src, /outcomeKey:\s*pointer\.outcomeKey/,
+      'Success path should include outcomeKey from pointer');
+    assert.match(src, /theaterCount:\s*pointer\.theaterCount/,
+      'Success path should include theaterCount from pointer');
+  });
+
+  it('populates note when runId supplied but does not match pointer runId', () => {
+    assert.match(src, /req\.runId.*pointer\.runId/,
+      'Should compare req.runId with pointer.runId for note');
+    assert.match(src, /runId filter not yet active/,
+      'Note text should explain the Phase 3 deferral');
+  });
+
+  it('returns redis_unavailable error string on Redis failure', () => {
+    assert.match(src, /redis_unavailable/,
+      'Should return redis_unavailable on catch');
+    assert.match(src, /markNoCacheResponse.*catch|catch[\s\S]*?markNoCacheResponse/,
+      'Should mark no-cache on error to avoid caching error state');
+  });
+});

@@ -1,0 +1,26 @@
+# Railway relay build config (root_dir="" — builds from repo root).
+# Promotes scripts/nixpacks.toml settings here since nixpacks only reads
+# config from the build root. Adds scripts/ dep install so that packages
+# in scripts/package.json (e.g. @anthropic-ai/sdk, fast-xml-parser) are
+# available at runtime when node scripts/ais-relay.cjs is started.
+
+[phases.setup]
+# aptPkgs = ["curl"]  — disabled; NIXPACKS' apt wrapper runs
+# `apt-get update && apt-get install` which fails hard when Ubuntu's
+# package-index CDN returns a hash mismatch (2026-04-17: noble-security
+# mirror globally broken, blocking ALL Railway NIXPACKS builds). The
+# manual cmds below tolerate transient mirror failures by adding
+# --fix-missing and allowing partial index updates to succeed.
+cmds = ["sudo apt-get update -o Acquire::AllowInsecureRepositories=false || true", "sudo apt-get install -y --no-install-recommends --fix-missing curl || echo 'apt curl install failed; curl may already be present'"]
+
+[variables]
+NODE_OPTIONS = "--dns-result-order=ipv4first"
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm install", "npm install --prefix scripts"]
+
+[start]
+cmd = "node scripts/ais-relay.cjs"

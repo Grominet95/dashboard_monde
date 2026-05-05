@@ -1,0 +1,446 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "theme": "mint",
+  "name": "World Monitor",
+  "description": "AI-powered real-time global intelligence dashboard",
+  "logo": {
+    "dark": "/logo.png",
+    "light": "/logo.png",
+    "href": "https://www.worldmonitor.app"
+  },
+  "favicon": "/favicon.png",
+  "seo": {
+    "metatags": {
+      "og:image": "https://www.worldmonitor.app/favico/og-image.png",
+      "og:site_name": "World Monitor Documentation",
+      "og:type": "website",
+      "og:locale": "en_US",
+      "twitter:card": "summary_large_image",
+      "twitter:site": "@worldmonitorai",
+      "twitter:image": "https://www.worldmonitor.app/favico/og-image.png"
+    }
+  },
+  "colors": {
+    "primary": "#4ade80",
+    "light": "#4ade80",
+    "dark": "#22c55e"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Blog",
+        "href": "https://www.worldmonitor.app/blog"
+      },
+      {
+        "label": "Dashboard",
+        "href": "https://www.worldmonitor.app"
+      },
+      {
+        "label": "Pro",
+        "href": "https://www.worldmonitor.app/pro"
+      },
+      {
+        "label": "GitHub",
+        "href": "https://github.com/koala73/worldmonitor"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Early Access",
+      "href": "https://www.worldmonitor.app/pro#waitlist"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "documentation",
+              "getting-started",
+              "architecture"
+            ]
+          },
+          {
+            "group": "Usage",
+            "pages": [
+              "usage-quickstart",
+              "usage-auth",
+              "usage-rate-limits",
+              "usage-errors"
+            ]
+          },
+          {
+            "group": "Platform & Features",
+            "pages": [
+              "overview",
+              "features",
+              "hotspots"
+            ]
+          },
+          {
+            "group": "Intelligence & Analysis",
+            "pages": [
+              "signal-intelligence",
+              "ai-intelligence",
+              "country-instability-index",
+              "methodology/country-resilience-index",
+              "methodology/chokepoints",
+              "methodology/pipelines",
+              "methodology/storage",
+              "methodology/shortages",
+              "methodology/disruptions",
+              "corrections",
+              "geographic-convergence",
+              "strategic-risk",
+              "algorithms"
+            ]
+          },
+          {
+            "group": "Workflows",
+            "pages": [
+              "route-explorer",
+              "scenario-engine"
+            ]
+          },
+          {
+            "group": "Map Layers",
+            "pages": [
+              "map-engine",
+              "orbital-surveillance",
+              "military-tracking",
+              "maritime-intelligence",
+              "natural-disasters",
+              "infrastructure-cascade",
+              "maps-and-geocoding",
+              "webcam-layer"
+            ]
+          },
+          {
+            "group": "Finance",
+            "pages": [
+              "finance-data",
+              "premium-finance",
+              "premium-finance-search"
+            ]
+          },
+          {
+            "group": "Panels — AI & PRO",
+            "pages": [
+              "panels/latest-brief",
+              "panels/forecast",
+              "panels/chat-analyst",
+              "panels/market-implications",
+              "panels/deduction",
+              "panels/daily-market-brief",
+              "panels/regional-intelligence",
+              "panels/strategic-posture",
+              "panels/stock-analysis",
+              "panels/stock-backtest",
+              "panels/wsb-ticker-scanner"
+            ]
+          },
+          {
+            "group": "Panels — Data & Tracking",
+            "pages": [
+              "panels/consumer-prices",
+              "panels/disease-outbreaks",
+              "panels/radiation-watch",
+              "panels/thermal-escalation",
+              "panels/airline-intel",
+              "panels/tech-readiness",
+              "panels/trade-policy",
+              "panels/supply-chain",
+              "panels/sanctions-pressure",
+              "panels/hormuz-tracker",
+              "panels/energy-crisis",
+              "panels/world-clock",
+              "panels/monitors",
+              "panels/oref-sirens",
+              "panels/telegram-intel",
+              "panels/fsi"
+            ]
+          },
+          {
+            "group": "Panels — Catalogues",
+            "pages": [
+              "panels/news-feeds",
+              "panels/indicators-and-signals"
+            ]
+          },
+          {
+            "group": "Desktop Application",
+            "pages": [
+              "desktop-app"
+            ]
+          },
+          {
+            "group": "MCP & Integrations",
+            "pages": [
+              "agent-discovery",
+              "mcp-server",
+              "api-oauth",
+              "api-notifications"
+            ]
+          },
+          {
+            "group": "HTTP API",
+            "pages": [
+              "api-platform",
+              "api-brief",
+              "api-commerce",
+              "api-scenarios",
+              "api-shipping-v2",
+              "api-proxies"
+            ]
+          },
+          {
+            "group": "Developer Guide",
+            "pages": [
+              "contributing",
+              "authentication",
+              "adding-endpoints",
+              "api-key-deployment",
+              "release-packaging",
+              "cors",
+              "health-endpoints",
+              "relay-parameters",
+              "data-sources"
+            ]
+          },
+          {
+            "group": "Legal",
+            "pages": [
+              "license"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference"
+            ]
+          },
+          {
+            "group": "Geopolitical",
+            "pages": [
+              {
+                "group": "Conflicts",
+                "openapi": "api/ConflictService.openapi.yaml"
+              },
+              {
+                "group": "Military",
+                "openapi": "api/MilitaryService.openapi.yaml"
+              },
+              {
+                "group": "Unrest",
+                "openapi": "api/UnrestService.openapi.yaml"
+              },
+              {
+                "group": "Intelligence",
+                "openapi": "api/IntelligenceService.openapi.yaml"
+              },
+              {
+                "group": "Displacement",
+                "openapi": "api/DisplacementService.openapi.yaml"
+              },
+              {
+                "group": "Cyber",
+                "openapi": "api/CyberService.openapi.yaml"
+              },
+              {
+                "group": "Sanctions",
+                "openapi": "api/SanctionsService.openapi.yaml"
+              }
+            ]
+          },
+          {
+            "group": "Natural Events",
+            "pages": [
+              {
+                "group": "Natural Disasters",
+                "openapi": "api/NaturalService.openapi.yaml"
+              },
+              {
+                "group": "Seismology",
+                "openapi": "api/SeismologyService.openapi.yaml"
+              },
+              {
+                "group": "Climate",
+                "openapi": "api/ClimateService.openapi.yaml"
+              },
+              {
+                "group": "Wildfires",
+                "openapi": "api/WildfireService.openapi.yaml"
+              },
+              {
+                "group": "Radiation",
+                "openapi": "api/RadiationService.openapi.yaml"
+              },
+              {
+                "group": "Thermal",
+                "openapi": "api/ThermalService.openapi.yaml"
+              }
+            ]
+          },
+          {
+            "group": "Economy & Markets",
+            "pages": [
+              {
+                "group": "Economic",
+                "openapi": "api/EconomicService.openapi.yaml"
+              },
+              {
+                "group": "Markets",
+                "openapi": "api/MarketService.openapi.yaml"
+              },
+              {
+                "group": "Trade",
+                "openapi": "api/TradeService.openapi.yaml"
+              },
+              {
+                "group": "Supply Chain",
+                "openapi": "api/SupplyChainService.openapi.yaml"
+              },
+              {
+                "group": "Consumer Prices",
+                "openapi": "api/ConsumerPricesService.openapi.yaml"
+              },
+              {
+                "group": "Predictions",
+                "openapi": "api/PredictionService.openapi.yaml"
+              },
+              {
+                "group": "Forecasts",
+                "openapi": "api/ForecastService.openapi.yaml"
+              }
+            ]
+          },
+          {
+            "group": "Infrastructure & Transport",
+            "pages": [
+              {
+                "group": "Aviation",
+                "openapi": "api/AviationService.openapi.yaml"
+              },
+              {
+                "group": "Maritime",
+                "openapi": "api/MaritimeService.openapi.yaml"
+              },
+              {
+                "group": "Infrastructure",
+                "openapi": "api/InfrastructureService.openapi.yaml"
+              },
+              {
+                "group": "Resilience",
+                "openapi": "api/ResilienceService.openapi.yaml"
+              }
+            ]
+          },
+          {
+            "group": "Health & Environment",
+            "pages": [
+              {
+                "group": "Public Health",
+                "openapi": "api/HealthService.openapi.yaml"
+              },
+              {
+                "group": "Imagery",
+                "openapi": "api/ImageryService.openapi.yaml"
+              },
+              {
+                "group": "Webcams",
+                "openapi": "api/WebcamService.openapi.yaml"
+              }
+            ]
+          },
+          {
+            "group": "Other",
+            "pages": [
+              {
+                "group": "News",
+                "openapi": "api/NewsService.openapi.yaml"
+              },
+              {
+                "group": "Research",
+                "openapi": "api/ResearchService.openapi.yaml"
+              },
+              {
+                "group": "Positive Events",
+                "openapi": "api/PositiveEventsService.openapi.yaml"
+              },
+              {
+                "group": "Giving",
+                "openapi": "api/GivingService.openapi.yaml"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "groups": [
+          {
+            "group": "Changelog",
+            "pages": [
+              "changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/koala73/worldmonitor",
+      "discord": "https://discord.gg/re63kWKxaz",
+      "x": "https://x.com/worldmonitorai"
+    },
+    "links": [
+      {
+        "header": "World Monitor",
+        "items": [
+          {
+            "label": "Dashboard",
+            "href": "https://www.worldmonitor.app"
+          },
+          {
+            "label": "Pro",
+            "href": "https://www.worldmonitor.app/pro"
+          },
+          {
+            "label": "Blog",
+            "href": "https://www.worldmonitor.app/blog"
+          }
+        ]
+      },
+      {
+        "header": "Community",
+        "items": [
+          {
+            "label": "GitHub",
+            "href": "https://github.com/koala73/worldmonitor"
+          },
+          {
+            "label": "Discord",
+            "href": "https://discord.gg/re63kWKxaz"
+          },
+          {
+            "label": "X",
+            "href": "https://x.com/worldmonitorai"
+          },
+          {
+            "label": "Status",
+            "href": "https://status.worldmonitor.app/"
+          }
+        ]
+      }
+    ]
+  }
+}

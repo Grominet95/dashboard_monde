@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package worldmonitor.news.v1;
+
+import "buf/validate/validate.proto";
+import "sebuf/http/annotations.proto";
+import "worldmonitor/core/v1/geo.proto";
+
+// NewsItem represents a single news article from RSS feed aggregation.
+message NewsItem {
+  // Source feed name.
+  string source = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  // Article headline.
+  string title = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  // Article URL.
+  string link = 3;
+  // Publication time, as Unix epoch milliseconds.
+  int64 published_at = 4 [(sebuf.http.int64_encoding) = INT64_ENCODING_NUMBER];
+  // Whether this article triggered an alert condition.
+  bool is_alert = 5;
+  // Threat classification, if assessed.
+  ThreatClassification threat = 6;
+  // Geolocation extracted from the article.
+  worldmonitor.core.v1.GeoCoordinates location = 7;
+  // Human-readable location name.
+  string location_name = 8;
+  // Composite importance score (0-100): severity × 55% + source tier × 20% + corroboration × 15% + recency × 10%.
+  int32 importance_score = 9;
+  // Number of distinct sources that reported the same story in this digest cycle.
+  int32 corroboration_count = 10;
+  // Story lifecycle metadata derived from cross-cycle persistence data.
+  StoryMeta story_meta = 11;
+  // Cleaned article description from the RSS/Atom <description> /
+  // <content:encoded> / <summary> / <content> tag: HTML-stripped,
+  // entity-decoded, whitespace-normalised, clipped to 400 chars. Empty string
+  // when unavailable or indistinguishable from the headline — consumers must
+  // fall back to the headline for display/LLM grounding in that case.
+  string snippet = 12;
+}
+
+// StoryMeta carries cross-cycle persistence data attached to each news item.
+message StoryMeta {
+  // Epoch ms when the story first appeared in any digest cycle.
+  int64 first_seen = 1 [(sebuf.http.int64_encoding) = INT64_ENCODING_NUMBER];
+  // Total number of digest cycles in which this story appeared.
+  int32 mention_count = 2;
+  // Number of unique sources that reported this story (cached from Redis Set).
+  int32 source_count = 3;
+  // Story lifecycle phase derived from persistence data.
+  StoryPhase phase = 4;
+}
+
+// StoryPhase represents the lifecycle stage of a tracked news story.
+enum StoryPhase {
+  // Unspecified or not yet tracked.
+  STORY_PHASE_UNSPECIFIED = 0;
+  // First appearance in any digest cycle.
+  STORY_PHASE_BREAKING = 1;
+  // 2–5 mentions and less than 2 hours old.
+  STORY_PHASE_DEVELOPING = 2;
+  // 6+ mentions or older than 2 hours; still active.
+  STORY_PHASE_SUSTAINED = 3;
+  // currentScore dropped below 50% of peakScore — story losing traction.
+  STORY_PHASE_FADING = 4;
+}
+
+// ThreatClassification represents an AI-assessed threat level for a news item.
+message ThreatClassification {
+  // Overall threat level.
+  ThreatLevel level = 1;
+  // Event category.
+  string category = 2;
+  // Confidence score (0.0 to 1.0).
+  double confidence = 3 [
+    (buf.validate.field).double.gte = 0,
+    (buf.validate.field).double.lte = 1
+  ];
+  // Classification source — "keyword", "ml", or "llm".
+  string source = 4;
+}
+
+// HeadlineSummary represents an AI-generated summary of recent headlines.
+message HeadlineSummary {
+  // Summary text.
+  string text = 1;
+  // Number of headlines analyzed.
+  int32 headline_count = 2;
+  // Summary generation time, as Unix epoch milliseconds.
+  int64 generated_at = 3 [(sebuf.http.int64_encoding) = INT64_ENCODING_NUMBER];
+  // AI model used for summarization.
+  string model = 4;
+}
+
+// ThreatLevel represents the assessed threat level of a news event.
+enum ThreatLevel {
+  // Unspecified threat level.
+  THREAT_LEVEL_UNSPECIFIED = 0;
+  // Low threat — routine reporting.
+  THREAT_LEVEL_LOW = 1;
+  // Medium threat — warrants monitoring.
+  THREAT_LEVEL_MEDIUM = 2;
+  // High threat — significant concern.
+  THREAT_LEVEL_HIGH = 3;
+  // Critical threat — immediate attention required.
+  THREAT_LEVEL_CRITICAL = 4;
+}

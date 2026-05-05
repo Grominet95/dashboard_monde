@@ -1,0 +1,202 @@
+/* ============================================================
+   Jarvis Visual Identity — 2026-05-01
+   Couvre : scrollbar, panneaux, header, boutons, badges,
+   status dots, progress bars, inputs, layers, DEFCON,
+   masquage des éléments non-Jarvis.
+   ============================================================ */
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(74, 158, 255, 0.25);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 158, 255, 0.45);
+}
+
+/* ---- Panneaux & cards — glassmorphism ---- */
+.panel, .sidebar, .card,
+[class*="panel"]:not([class*="panel-locked"]):not([class*="panel-gate"]):not([class*="panel-header"]):not([class*="panel-content"]):not([class*="panel-body"]):not([class*="panel-section"]):not([class*="panel-title"]):not([class*="panel-footer"]):not([class*="panel-tab"]):not([class*="panel-col"]):not([class*="panel-row"]):not([class*="panel-item"]):not([class*="panel-badge"]):not([class*="panel-sub"]):not([class*="panel-group"]):not([class*="panel-toggle"]):not([class*="panel-chart"]):not([class*="panel-detail"]):not([class*="panel-view"]):not([class*="panel-block"]):not([class*="panel-mini"]):not([class*="panel-cell"]):not([class*="panel-icon"]):not([class*="panel-label"]):not([class*="panel-action"]):not([class*="panel-metric"]),
+[class*="card"]:not([class*="card-header"]):not([class*="card-body"]):not([class*="card-footer"]):not([class*="card-title"]):not([class*="card-sub"]):not([class*="card-label"]):not([class*="card-item"]) {
+  background: rgba(8, 12, 20, 0.85);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(74, 158, 255, 0.08);
+  border-radius: 6px;
+}
+
+/* ---- Header / Topbar ---- */
+header, .topbar {
+  background: rgba(6, 8, 13, 0.95);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-bottom: 1px solid rgba(74, 158, 255, 0.08);
+  height: 44px;
+}
+
+/* ---- Panels latéraux ---- */
+.layers-panel, .news-panel, .insights-panel,
+[class*="sidebar"], [class*="panel-left"], [class*="panel-right"] {
+  background: rgba(6, 8, 13, 0.90);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-right: 1px solid rgba(74, 158, 255, 0.08);
+}
+
+/* ---- Headers de panels ---- */
+.panel-header, [class*="panel-title"] {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(220, 232, 255, 0.45);
+  border-bottom: 1px solid rgba(74, 158, 255, 0.08);
+  padding: 10px 16px;
+}
+
+/* ---- Boutons ---- */
+button, .btn, [class*="button"] {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(74, 158, 255, 0.25);
+  color: #DCE8FF;
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+button:hover, .btn:hover {
+  border-color: #4A9EFF;
+  color: #4A9EFF;
+  background: rgba(74, 158, 255, 0.06);
+}
+
+button.primary, .btn-primary {
+  background: rgba(74, 158, 255, 0.15);
+  border-color: #4A9EFF;
+  color: #4A9EFF;
+}
+
+/* ---- Badges / Pills de statut ---- */
+.badge, .pill,
+[class*="badge"]:not([class*="beta-badge"]):not([class*="badge-blue"]):not([class*="badge-gold"]):not([class*="badge-green"]):not([class*="badge-red"]),
+[class*="status"]:not([class*="status-dot"]):not([class*="status-indicator"]):not([class*="status-live"]):not([class*="status-cached"]) {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 99px;
+  padding: 2px 8px;
+  border: 1px solid;
+}
+
+.badge-blue   { color: #4A9EFF; border-color: rgba(74,158,255,0.3);  background: rgba(74,158,255,0.08);  }
+.badge-gold   { color: #B8963E; border-color: rgba(184,150,62,0.3);  background: rgba(184,150,62,0.08);  }
+.badge-green  { color: #36D399; border-color: rgba(54,211,153,0.3);  background: rgba(54,211,153,0.08);  }
+.badge-red    { color: #ef4444; border-color: rgba(239,68,68,0.3);   background: rgba(239,68,68,0.08);   }
+
+/* ---- Status dots (glow) ---- */
+.dot, .status-dot, [class*="indicator"] {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-active  { background: #36D399; box-shadow: 0 0 8px rgba(54, 211, 153, 0.6); }
+.dot-normal  { background: #4A9EFF; box-shadow: 0 0 8px rgba(74, 158, 255, 0.6); }
+.dot-alert   { background: #B8963E; box-shadow: 0 0 8px rgba(184, 150, 62, 0.6); }
+.dot-danger  { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);  }
+
+/* ---- Progress bars ---- */
+.progress, [class*="progress-bar"], [class*="bar-fill"] {
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #2D7DD2, #4A9EFF);
+}
+
+.progress-track, [class*="progress-track"] {
+  height: 3px;
+  background: rgba(74, 158, 255, 0.08);
+  border-radius: 99px;
+}
+
+/* ---- Inputs et champs de recherche ---- */
+input, .search, [class*="input"], [class*="search"] {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  background: rgba(6, 8, 13, 0.80);
+  border: 1px solid rgba(74, 158, 255, 0.15);
+  border-radius: 4px;
+  color: #DCE8FF;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+input:focus, .search:focus {
+  border-color: #4A9EFF;
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.08);
+}
+
+input::placeholder {
+  color: rgba(220, 232, 255, 0.25);
+}
+
+/* ---- Checkboxes des layers ---- */
+input[type="checkbox"] {
+  accent-color: #4A9EFF;
+  width: 13px;
+  height: 13px;
+}
+
+.layer-item, [class*="layer-row"] {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: rgba(220, 232, 255, 0.65);
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background 120ms ease;
+}
+
+.layer-item:hover {
+  background: rgba(74, 158, 255, 0.06);
+  color: #DCE8FF;
+}
+
+/* ---- DEFCON badge ---- */
+.defcon-badge, [class*="defcon"] {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+/* ---- Masquer les éléments non-Jarvis ---- */
+.sign-in-btn,
+.create-account-btn,
+.github-stars,
+.discord-banner,
+.community-widget,
+.credit-link,
+.github-link,
+.site-footer-credit,
+.api-keys-gate-btn,
+#authWidgetMount,
+[href*="discord.gg"],
+[href*="github.com/koala73"] {
+  display: none !important;
+}

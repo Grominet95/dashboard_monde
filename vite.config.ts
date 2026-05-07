@@ -814,9 +814,34 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
+    optimizeDeps: {
+      include: ['globe.gl', 'hls.js'],
+      esbuildOptions: {
+        plugins: [
+          {
+            // globe.gl ships a corrupt .map file — strip the sourceMappingURL
+            // comment so esbuild never tries to parse it.
+            name: 'strip-globe-gl-sourcemap',
+            setup(build) {
+              build.onLoad({ filter: /globe\.gl\.js$/, namespace: 'file' }, async (args) => {
+                const contents = await readFile(args.path, 'utf8');
+                return {
+                  contents: contents.replace(/\/\/# sourceMappingURL=\S+/g, ''),
+                  loader: 'js',
+                };
+              });
+            },
+          },
+        ],
+      },
+    },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src'),
+        // globe.gl and hls.js package.json export fields reference .mjs files
+        // that are absent from their dist/ directories — alias to the actual files.
+        'globe.gl': resolve(__dirname, 'node_modules/globe.gl/dist/globe.gl.js'),
+        'hls.js': resolve(__dirname, 'node_modules/hls.js/dist/hls.js'),
         child_process: resolve(__dirname, 'src/shims/child-process.ts'),
         'node:child_process': resolve(__dirname, 'src/shims/child-process.ts'),
         '@loaders.gl/worker-utils/dist/lib/process-utils/child-process-proxy.js': resolve(

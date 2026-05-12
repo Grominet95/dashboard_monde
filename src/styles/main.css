@@ -139,6 +139,33 @@
   --yellow: #ffaa00;
 }
 
+/* ── Jarvis Design System tokens — utilisés par les vues geo ──── */
+:root {
+  --bg-0: #06080D;
+  --bg-1: #0A0E16;
+  --bg-2: #0F141F;
+  --bg-3: #161C2A;
+  --line-1: rgba(220,232,255,0.06);
+  --line-2: rgba(220,232,255,0.10);
+  --line-3: rgba(220,232,255,0.16);
+  --fg-0:  #DCE8FF;
+  --fg-1:  rgba(220,232,255,0.78);
+  --fg-2:  rgba(220,232,255,0.55);
+  --fg-3:  rgba(220,232,255,0.36);
+  --fg-4:  rgba(220,232,255,0.20);
+  --red:        #E5484D;
+  --red-soft:   rgba(229,72,77,0.10);
+  --gold:       #B8963E;
+  --gold-soft:  rgba(184,150,62,0.12);
+  --green:      #36D399;
+  --green-soft: rgba(54,211,153,0.12);
+  --accent-soft: rgba(74,158,255,0.14);
+  --accent-line: rgba(74,158,255,0.32);
+  --serif: "Geist","Inter",system-ui,sans-serif;
+  --sans:  "Geist","Inter",system-ui,sans-serif;
+  --mono:  "Geist Mono","JetBrains Mono",ui-monospace,monospace;
+}
+
 /* ============================================================
    Light Theme — overrides theme colors AND semantic colors
    Bright/neon dark-mode colors need darker variants for light backgrounds
@@ -23269,4 +23296,57 @@ body.map-width-resizing {
 
 .ecp-source-link:hover {
   text-decoration: underline;
+}
+
+/* ── Geo view switcher — overlay + stubs ────────────────────────── */
+#geo-view-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--bg-0);
+  overflow: hidden;
+  padding: 0;
+}
+
+#geo-view-overlay.geo-view-overlay--active {
+  display: block;
+}
+
+.view-stub {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.view-stub__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.view-stub__title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.view-stub__body {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 420px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+@keyframes view-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

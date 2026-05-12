@@ -100,6 +100,13 @@ import type { CorrelationPanel } from '@/components/CorrelationPanel';
 
 const CYBER_LAYER_ENABLED = import.meta.env.VITE_ENABLE_CYBER_LAYER === 'true';
 
+import { mountViewSwitcher, currentView } from '@/app/router';
+import type { ViewId, ViewSwitcherHandle } from '@/app/router';
+import { renderAtlas } from '@/views/atlas';
+import { renderPulse } from '@/views/pulse';
+import { renderTech } from '@/views/tech';
+import { renderFrance } from '@/views/france';
+
 export type { CountryBriefSignals } from '@/app/app-context';
 
 export class App {
@@ -132,6 +139,9 @@ export class App {
   // so that test harnesses / same-document re-inits don't accumulate
   // duplicate registrations.
   private webMcpController: AbortController | null = null;
+  private viewSwitcher: ViewSwitcherHandle | null = null;
+  private geoViewOverlay: HTMLDivElement | null = null;
+  private activeViewCleanup: (() => void) | null = null;
   private visiblePanelPrimed = new Set<string>();
   private visiblePanelPrimeRaf: number | null = null;
   private bootstrapHydrationState: BootstrapHydrationState = getBootstrapHydrationState();
@@ -1132,6 +1142,30 @@ export class App {
     // Unblock any WebMCP tool invocations that arrived during startup.
     this.resolveUiReady();
 
+    // Phase 4.5 — Jarvis view switcher (top-bar flottante + overlay vues)
+    const overlay = document.createElement('div');
+    overlay.id = 'geo-view-overlay';
+    document.body.appendChild(overlay);
+    this.geoViewOverlay = overlay;
+
+    const switchView = (v: ViewId): void => {
+      this.activeViewCleanup?.();
+      this.activeViewCleanup = null;
+      overlay.innerHTML = '';
+      overlay.classList.add('geo-view-overlay--active');
+      overlay.style.animation = 'view-fade .26s ease-out';
+      const viewData = { news: this.state.allNews, markets: this.state.latestMarkets };
+      switch (v) {
+        case 'atlas':  this.activeViewCleanup = renderAtlas(overlay, document.getElementById('mapContainer') ?? undefined, viewData);  break;
+        case 'pulse':  this.activeViewCleanup = renderPulse(overlay, viewData);  break;
+        case 'tech':   this.activeViewCleanup = renderTech(overlay, viewData);   break;
+        case 'france': this.activeViewCleanup = renderFrance(overlay, viewData); break;
+      }
+    };
+
+    this.viewSwitcher = mountViewSwitcher({ host: document.body, onView: switchView });
+    switchView(currentView());
+
     // Phase 5: Event listeners + URL sync
     this.eventHandlers.init();
     // Capture deep link params BEFORE URL sync overwrites them
@@ -1289,6 +1323,12 @@ export class App {
     // pointing at a disposed App.
     this.webMcpController?.abort();
     this.webMcpController = null;
+    this.activeViewCleanup?.();
+    this.activeViewCleanup = null;
+    this.viewSwitcher?.destroy();
+    this.viewSwitcher = null;
+    this.geoViewOverlay?.remove();
+    this.geoViewOverlay = null;
   }
 
   // Waits for Phase-4 UI modules (searchManager + countryIntel) to finish

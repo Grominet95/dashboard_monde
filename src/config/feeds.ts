@@ -972,6 +972,7 @@ export const SOURCE_REGION_MAP: Record<string, { labelKey: string; feedKeys: str
 export const INTEL_SOURCES: Feed[] = [
   // Defense & Security (Tier 1)
   { name: 'Defense One', url: rss('https://www.defenseone.com/rss/all/'), type: 'defense' },
+  { name: 'Breaking Defense', url: rss('https://breakingdefense.com/feed/'), type: 'defense' },
   { name: 'The War Zone', url: rss('https://www.twz.com/feed'), type: 'defense' },
   { name: 'Defense News', url: rss('https://www.defensenews.com/arc/outboundfeeds/rss/?outputType=xml'), type: 'defense' },
   { name: 'Janes', url: rss('https://news.google.com/rss/search?q=site:janes.com+when:3d&hl=en-US&gl=US&ceid=US:en'), type: 'defense' },
